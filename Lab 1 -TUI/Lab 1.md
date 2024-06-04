@@ -1,31 +1,173 @@
 ﻿# Lab 1
 # Створення багатовіконного TUI з допомогою Jexer
-Мета роботи - навчитись створювати прості текстові інтерфейси з допомогою популярної бібліотеки [Jexer](https://gitlab.com/klamonte/jexer).
 
-![Demo](https://github.com/liketaurus/TUI-Labs/blob/master/Lab%201%20-TUI/TUI-Lab-1.PNG)
-
-Допоміжні матеріали:
- - [Документація](https://jexer.sourceforge.io/apidocs/api/overview-summary.html)
- - [Вікі з прикладами](https://gitlab.com/klamonte/jexer/wikis/home)
- - [Репозиторій](https://github.com/liketaurus/OOP-JAVA) з класами з усіх попередніх лаб (завдання 'Banking')
-
-Ви можете обрати завдання на бажану оцінку - три, чотири або п'ять. *УВАГА! Завдання "на чотири" та "на п'ять" потребують виконання завдання "на три"!*
 ## На "трійку"
-1. Завантажте jar-файл Jexer з [cайту проекту](https://sourceforge.net/projects/jexer/files/latest/download) або з [цього ж репозиторію](https://github.com/liketaurus/TUI-Labs/blob/master/jars/jexer-0.3.0.jar)
-2. Створіть в Netbeans новий проект з назвою TUIdemo. *УВАГА! Чекбокс *Create Main Class* треба **очистити** (**не створювати виконуваний клас**)!*
-3. Додайте до проекту бібліотеку Jexer - правою кнопкой на проекті, обрати *Properties*, потім у дереві категорій обрати *Libraries* (другий пункт зверху), натиснути у правій частині вікна кнопку *Add JAR/Folder*, обрати jar-файл, завантажений у п. 1, натиснути *Ok*
-4. Додайте до проекту файл **[TUIdemo.java](https://github.com/liketaurus/TUI-Labs/blob/master/Lab%201%20-TUI/TUIdemo.java)** з цього репозиторію
-5. Вивчіть вихідний код у файлі, впевніться, що ви розумієте як він має працювати
-6. Запустіть проект - ви маєте побачити вікно з меню та рядком статусу. Дослідіть пункти меню, впевніться, що всі вони працюють та надають корисну функціональність. Продемонстрируйте результат викладачеві.
+Скріншот запущеної програми:
+![image](https://github.com/ppc-ntu-khpi/tui-tamiilpho/assets/120334809/b8441aac-4aa4-4dc8-b568-b375fe2a1a54)
 
 ## На "чотири"
-1. Перепишіть метод **ShowCustomerDetails** з використанням класів *Bank, Customer, Account* та ін. з наших попередніх лаб - банк повинен мати як мінімум два клієнти, інформацію про яких (та про перші рахунки, що їм належать) ви маєте побачити, увівши номер клієнта. *УВАГА! Класи можна взяти або з [відповідного репозиторію](https://github.com/liketaurus/OOP-JAVA), або взяти [jar-файл](https://github.com/liketaurus/TUI-Labs/blob/master/jars/MyBank.jar) з усіма необхідними класами з цього ж репозиторію та підключити його як бібліотеку (див. п.3 завдання "на трійку).*
-2. Запустіть проект, впевніться, що все працює як очікувалось. Продемонстрируйте результат викладачеві.
+Переписаний код:
+````java
+import jexer.TAction;
+import jexer.TApplication;
+import jexer.TField;
+import jexer.TText;
+import jexer.TWindow;
+import jexer.event.TMenuEvent;
+import jexer.menu.TMenu;
 
-## На "п'ять"
-1. Перепишіть метод **ShowCustomerDetails** з використанням класів *Bank, Customer, Account* та ін. з наших попередніх лаб - інформація про клієнтів банку та їх рахунках має читатись з файлу **test.dat** (робота номер 8, [файл даних](https://github.com/liketaurus/TUI-Labs/blob/master/data/test.dat) також є в цьому ж репозиторію). Інформацію про клієнта (та про перший рахунок, що йому належить) ви маєте побачити, увівши номер клієнта.
-2. Запустіть проект, впевніться, що все працює як очікувалось. Продемонстрируйте результат викладачеві.
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ *
+ * @author Alexander 'Taurus' Babich
+ */
+public class TUIdemo extends TApplication {
 
-**УВАГА! Не забудьте завантажити результат виконання роботи до вашого власного репозиторію - в проекті 'Banking' цей класс має бути в пакеті com.mybank.tui!**
+    private static final int ABOUT_APP = 2000;
+    private static final int CUST_INFO = 2010;
+    private Bank bank;
 
+    public static void main(String[] args) throws Exception {
+        TUIdemo tdemo = new TUIdemo();
+        (new Thread(tdemo)).start();
+    }
+
+    public TUIdemo() throws Exception {
+        super(TApplication.BackendType.SWING);
+
+        // Ініціалізація банку з деякими клієнтами
+        bank = new Bank();
+        bank.addCustomer(new Customer(1, "John Doe", new Account("Checking", 200.00)));
+        bank.addCustomer(new Customer(2, "Jane Smith", new Account("Savings", 1500.00)));
+
+        addToolMenu();
+        // Користувацьке меню 'File'
+        TMenu fileMenu = addMenu("&File");
+        fileMenu.addItem(CUST_INFO, "&Customer Info");
+        fileMenu.addDefaultItem(TMenu.MID_SHELL);
+        fileMenu.addSeparator();
+        fileMenu.addDefaultItem(TMenu.MID_EXIT);
+        // Кінець меню 'File' 
+
+        addWindowMenu();
+
+        // Користувацьке меню 'Help'
+        TMenu helpMenu = addMenu("&Help");
+        helpMenu.addItem(ABOUT_APP, "&About...");
+        // Кінець меню 'Help' 
+
+        setFocusFollowsMouse(true);
+        // Вікно клієнта
+        ShowCustomerDetails();
+    }
+
+    @Override
+    protected boolean onMenu(TMenuEvent menu) {
+        if (menu.getId() == ABOUT_APP) {
+            messageBox("About", "\t\t\t\t\t   Just a simple Jexer demo.\n\nCopyright \u00A9 2019 Alexander \'Taurus\' Babich").show();
+            return true;
+        }
+        if (menu.getId() == CUST_INFO) {
+            ShowCustomerDetails();
+            return true;
+        }
+        return super.onMenu(menu);
+    }
+
+    private void ShowCustomerDetails() {
+        TWindow custWin = addWindow("Customer Window", 2, 1, 40, 10, TWindow.NOZOOMBOX);
+        custWin.newStatusBar("Enter valid customer number and press Show...");
+
+        custWin.addLabel("Enter customer number: ", 2, 2);
+        TField custNo = custWin.addField(24, 2, 3, false);
+        TText details = custWin.addText("Owner Name: \nAccount Type: \nAccount Balance: ", 2, 4, 38, 8);
+        custWin.addButton("&Show", 28, 2, new TAction() {
+            @Override
+            public void DO() {
+                try {
+                    int custNum = Integer.parseInt(custNo.getText());
+                    Customer customer = bank.getCustomer(custNum);
+                    if (customer != null) {
+                        Account account = customer.getAccount();
+                        details.setText(String.format("Owner Name: %s (id=%d)\nAccount Type: '%s'\nAccount Balance: $%.2f",
+                                customer.getName(), custNum, account.getType(), account.getBalance()));
+                    } else {
+                        messageBox("Error", "Customer not found!").show();
+                    }
+                } catch (Exception e) {
+                    messageBox("Error", "You must provide a valid customer number!").show();
+                }
+            }
+        });
+    }
+
+    // Зразки класів
+    public class Bank {
+        private List<Customer> customers;
+
+        public Bank() {
+            customers = new ArrayList<>();
+        }
+
+        public void addCustomer(Customer customer) {
+            customers.add(customer);
+        }
+
+        public Customer getCustomer(int id) {
+            for (Customer customer : customers) {
+                if (customer.getId() == id) {
+                    return customer;
+                }
+            }
+            return null;
+        }
+    }
+
+    public class Customer {
+        private int id;
+        private String name;
+        private Account account;
+
+        public Customer(int id, String name, Account account) {
+            this.id = id;
+            this.name = name;
+            this.account = account;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Account getAccount() {
+            return account;
+        }
+    }
+
+    public class Account {
+        private String type;
+        private double balance;
+
+        public Account(String type, double balance) {
+            this.type = type;
+            this.balance = balance;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public double getBalance() {
+            return balance;
+        }
+    }
+}
+````
+Скріншот запущеної програми:
+
+![image](https://github.com/ppc-ntu-khpi/tui-tamiilpho/assets/120334809/24a80b3c-0e5c-4a1f-ad67-3969f6bd98c5)
